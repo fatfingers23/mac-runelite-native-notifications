@@ -1,7 +1,8 @@
 # Native Mac Notifications
+***This plugin only works on Mac OS*** 
 
 This replaces the current RuneLite Notifications with native mac notifications from the notification center. Will need 
-to go into RuneLite settings and turn off Notifications. If not double will show. 
+to go into RuneLite settings and turn off Notifications. If not double notifications will show. 
 
 ## Developer notes
 During development notifications will show that they come from Java. But should say RuneLite
