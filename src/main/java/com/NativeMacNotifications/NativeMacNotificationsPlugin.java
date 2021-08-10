@@ -5,12 +5,15 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
+import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.NotificationFired;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginInstantiationException;
 import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.ui.ClientUI;
 import net.runelite.client.util.OSType;
 
 @Slf4j
@@ -25,11 +28,27 @@ public class NativeMacNotificationsPlugin extends Plugin
 	@Inject
 	private PluginManager pluginManager;
 
+	@Inject
+	private RuneLiteConfig runeLiteConfig;
+
+	@Inject
+	private ClientUI clientUI;
+
+	@Inject
+	private ConfigManager configManager;
+
+	private Boolean resetTrayNotificationsAtShutDown;
+
 	@Subscribe
 	public void onNotificationFired(NotificationFired notificationFired)
 	{
 		try
 		{
+			if (!runeLiteConfig.sendNotificationsWhenFocused() && clientUI.isFocused())
+			{
+				return;
+			}
+
 			Notification.notify(buildTitle(), notificationFired.getMessage());
 		}
 		catch (Exception e)
@@ -39,11 +58,28 @@ public class NativeMacNotificationsPlugin extends Plugin
 	}
 
 	@Override
-	protected void startUp() throws PluginInstantiationException
+	protected void startUp()
 	{
 		if (OSType.getOSType() != OSType.MacOS)
 		{
 			stopPlugin();
+		}
+		else
+		{
+			if (runeLiteConfig.enableTrayNotifications())
+			{
+				resetTrayNotificationsAtShutDown = true;
+				configManager.setConfiguration(RuneLiteConfig.GROUP_NAME, "notificationTray", false);
+			}
+		}
+	}
+
+	@Override
+	protected void shutDown()
+	{
+		if (resetTrayNotificationsAtShutDown)
+		{
+			configManager.setConfiguration(RuneLiteConfig.GROUP_NAME, "notificationTray", true);
 		}
 	}
 
